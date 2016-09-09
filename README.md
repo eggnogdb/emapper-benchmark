@@ -7,12 +7,27 @@ Additional figures and details are available as [jupyter notebook](./benchmark_a
 
 # Reproducibility
 
-Benchmark requires running BLAST, InterProScan and eggNOG-mapper independently. Programs were executed as followed. 
-Raw_data (~55GB uncompressed) can be downloaded from: http://beta-eggnogdb.embl.de/download/eggnog_4.5/eggnog-mapper-data/emapper_benchmark.tar.gz
-The downloaded data should include a `run.sh` script with the command lines used to call each program. 
+Benchmark requires running BLAST, InterProScan and eggNOG-mapper independently
+and, in the case of eggNOG-mapper, using multiple combinations of parameters.
+All raw data (~55GB uncompressed) can be downloaded from:
+http://beta-eggnogdb.embl.de/download/eggnog_4.5/eggnog-mapper-data/emapper_benchmark.tar.gz
 
-To rerun the whole benchmark analysis, decompress all the raw data in the root directory of this repository, and call `benchmark.py`, which will generate the digested `all_benchmark_tables.pkl`
-file used in the jupyter notebook. 
+Data includes 4 self-explanatory directories: 
+
+```bash
+  blast/
+  interpro/
+  emapper_hmm/
+  emapper_diamond/
+```
+
+Each directory contains a `run.sh` script with the command lines generate all data. 
+
+To re-run the whole benchmark analysis, decompress all 4 directories under
+within this repository, and execute `benchmark.py`, which will generate a
+digested `all_benchmark_tables.pkl` file to be used within the jupyter notebook.
+
+
 
 
 
