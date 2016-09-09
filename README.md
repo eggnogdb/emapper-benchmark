@@ -2,7 +2,7 @@ Scripts and analysis of [eggNOG-mapper](https://github.com/jhcepas/eggnog-mapper
 
 # Analysis
 
-Additional figures and details are available as [jupyter notebook](./benchmark_analysis) in this reposotory. 
+Additional figures and details are available as [jupyter notebook](./benchmark_analysis.ipynb) in this reposotory. 
 
 
 # Reproducibility
