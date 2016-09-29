@@ -11,7 +11,7 @@ Additional figures and details are available as [jupyter notebook](./benchmark_a
 Benchmark requires running BLAST, InterProScan and eggNOG-mapper independently
 and, in the case of eggNOG-mapper, using multiple combinations of parameters.
 All raw data (~55GB uncompressed) can be downloaded from:
-http://beta-eggnogdb.embl.de/download/eggnog_4.5/eggnog-mapper-data/emapper_benchmark.tar.gz
+http://beta-eggnogdb.embl.de/download/eggnog_4.5/eggnog-mapper-data/emapper_benchmark_data.tar.gz
 
 Data includes 4 self-explanatory directories: 
 
