@@ -1,0 +1,22 @@
+224308 & # Bacillus subtilis subsp. subtilis 168
+83333 & # E. coli K12
+85962 & # Helicobacter pylori ATCC 700392
+243273 & # Mycoplasma genitalium ATCC 33530
+208964 & # Pseudomonas aeruginosa PA01
+160488 & # Pseudomonas putida KT2440
+223283 & #pseudomonas syringae pv. tomato str. DC3000
+321314 & # Salmonella enterica subsp. enterica serovar Choleraesuis strain SC-B67
+99287 & # Salmonella typhimurium
+170187 & # Streptococcus pneumoniae TIGR4
+
+# of sequences per taxon:
+sp_species.160488.tfa:693
+sp_species.170187.tfa:502
+sp_species.208964.tfa:1245
+sp_species.223283.tfa:675
+sp_species.224308.tfa:4188
+sp_species.243273.tfa:483
+sp_species.321314.tfa:882
+sp_species.83333.tfa:4431
+sp_species.85962.tfa:581
+sp_species.99287.tfa:1771

@@ -1,0 +1,15 @@
+478009 & #Halobacterium salinarum R1
+309800 & # Haloferax volcanii DS2
+453591 & # Ignicoccus hospitalis KIN4/I
+243232 & # Methanocaldococcus jannaschii DSM 2661 
+#186497 & # Rhodopseudomonas sp. HMD89
+273057 & # Sulfolobus solfataricus P2
+436308 & # Nitrosopumilus maritimus strain SCM1
+# of targets per taxon
+#sp_species.186497.tfa:480
+sp_species.243232.tfa:1787
+sp_species.273057.tfa:448
+sp_species.309800.tfa:93
+sp_species.436308.tfa:91
+sp_species.453591.tfa:125
+sp_species.478009.tfa:267

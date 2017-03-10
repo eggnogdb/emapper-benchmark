@@ -1,0 +1,24 @@
+3702 # Arabidopsis thaliana
+44689 # Dictyostelium discoideum
+9606 # Homo sapiens
+10090 # Mus musculus
+10116 # Rattus norvegicus
+4932 # Saccharomyces cerevisiea
+8355 # Xenopus laevis
+# NEW for CAFA 2
+4896 #Schizosaccharomyces pombe
+7955 # Danio rerio
+7227 # Drosophila melanogaster
+
+# Number of sequences per file
+sp_species.10090.tfa:16613
+sp_species.10116.tfa:7854
+sp_species.284812.tfa:5089
+sp_species.3702.tfa:12069
+sp_species.44689.tfa:4126
+sp_species.559292.tfa:6621
+sp_species.7227.tfa:3195
+sp_species.7955.tfa:2885
+sp_species.8355.tfa:3365
+sp_species.9606.tfa:20257
+

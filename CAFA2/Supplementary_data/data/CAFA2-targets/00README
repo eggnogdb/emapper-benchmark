@@ -1,0 +1,13 @@
+This tarball contains a set of targets generated for CAFA 2 (2013-2014). The
+targets were generated from SwissProt from 5/2013.
+
+This tarball contains three directories, for bacteria, eukarya and
+archaea. Each directory has several fasta files, containig targets from
+selected species. The number on the file name is the NCBI Taxonomy code
+for the targets in that files. The codes are given in the .txt file in
+each directory.
+
+See http://BioFunctionPrediction.org for more details on CAFA.
+
+Questions should be referred to the CAFA 2 organizers:
+cafa.2014@gmail.com
