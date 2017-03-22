@@ -1,0 +1,11 @@
+# Fri Feb 10 18:33:59 2017
+# emapper-0.12.7-4-g38be51a
+# /home/huerta/eggnog-mapper-latest/emapper.py --cpu 20 -o all_filtered_archea.hmm-all -i all_filtered_archea.fa -d arch:localhost:51600 --target_orthologs all
+#
+# #query_name	hit	evalue	sum_score	query_length	hmmfrom	hmmto	seqfrom	seqto	query_coverage
+T2730570000038	creNOG.ENOG410FCUG.meta_raw	1.9501312802e-86	289.957336426	202	7	206	2	201	0.985148514851
+T2730570000069	creNOG.ENOG410FCMP.meta_raw	1.04466693547e-127	426.931976318	291	2	303	1	291	0.996563573883
+T3098000000011	arNOG.arCOG06399.meta_raw	1.41024349776e-125	420.556610107	457	2	397	2	457	0.995623632385
+# 3 queries scanned
+# Total time (seconds): 0.341406822205
+# Rate: 8.79 q/s

@@ -1,0 +1,9 @@
+# Fri Feb 10 18:34:06 2017
+# /home/huerta/eggnog-mapper-latest/emapper.py --cpu 20 -o all_filtered_archea.hmm-all -i all_filtered_archea.fa -d arch:localhost:51600 --target_orthologs all
+#query_name	seed_eggNOG_ortholog	seed_ortholog_evalue	seed_ortholog_score	predicted_gene_name	GO_terms	KEGG_pathways	Annotation_tax_scope	OGs	bestOG|evalue|score	COG cat	eggNOG annot
+T2730570000038	273057.SSO0001	1.6e-137	445.3				arNOG[11]	0FCUG@creNOG,COG1468@NOG,arCOG00790@arNOG	0FCUG|1.9501312802e-86|289.957336426	V	CRISPR-associated protein Cas4
+T2730570000069	273057.SSO1391	2.3e-202	659.4	CSA1			arNOG[11]	0FCMP@creNOG,COG4343@NOG,arCOG04195@arNOG	0FCMP|1.04466693547e-127|426.931976318	V	CRISPR-associated protein Csa1
+T3098000000011	309800.HVO_1526	0.0	1024.3		GO:0004169,GO:0044459		arNOG[11]	0YCQD@NOG,arCOG06399@arNOG	arCOG06399|1.41024349776e-125|420.556610107	M	NA
+# 4 queries scanned
+# Total time (seconds): 0.0483090877533
+# Rate: 82.80 q/s

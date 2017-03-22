@@ -1,0 +1,11 @@
+# Fri Feb 10 18:34:05 2017
+# emapper-0.12.7-4-g38be51a
+# /home/huerta/eggnog-mapper-latest/emapper.py --cpu 20 -o all_filtered_archea.hmm-all -i all_filtered_archea.fa -d arch:localhost:51600 --target_orthologs all
+#
+#query_name	best_hit_eggNOG_ortholog	best_hit_evalue	best_hit_score
+T2730570000038	273057.SSO0001	1.6e-137	445.3
+T2730570000069	273057.SSO1391	2.3e-202	659.4
+T3098000000011	309800.HVO_1526	0.0	1024.3
+# 3 queries scanned
+# Total time (seconds): 6.47732281685
+# Rate: 0.46 q/s

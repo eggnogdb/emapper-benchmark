@@ -1,9 +1,10 @@
 import sys
+import os
 import itertools
+import multiprocessing
+import time
 from eggnogmapper import annota
-
-annota.connect()
-CACHE = True
+import cPickle
 
 def iter_tsv_lines(fname):
     for line in open(fname):
@@ -12,120 +13,106 @@ def iter_tsv_lines(fname):
         fields = map(str.strip, line.split('\t'))
         yield fields
 
-def main(blast_hits_file, emapper_hits_file, target_taxa, exec_mode, target_cutoffs):
-    # pre-load emapper predictions
-    seq2emapper = {}
-    for fields in iter_tsv_lines(emapper_hits_file):
-        #query_name || best_hit_eggNOG_ortholog || best_hit_evalue || best_hit_score
-        #predicted_name (one-to-one) || orthologs (one-to-one) || GO (one-to-one)
-        #KEGG_pathway (one-to-one) || predicted_name (all orthologs) || orthologs (not
-        #one-to-one) || GO (not one-to-one) || KEGG_pathway (not one-to-one)
+def iter_hits(fname):
+    last_query = None
+    query_hits = []
+    for fields in iter_tsv_lines(fname):
+        if last_query is None:
+            last_query = fields[0]
+        elif fields[0] != last_query:
+            yield last_query, query_hits
+            last_query = fields[0]
+            query_hits = []
+        query_hits.append(fields)
+    yield last_query, query_hits
 
-        qname = fields[0].strip()
-        orthologs = set([o.strip() for o in fields[5].split(',')])
-        orthologs.discard('')
-        seq2emapper[qname] = orthologs
+def get_gos(members):
+    all_gos = set()
+    for m in members:
+        all_gos.update(MEMBERGOS[m])
+    all_gos.discard('')
+    all_gos.discard('None')
+    return all_gos
 
+def annotate_blast_hits(arguments):
+    t1 = time.time()
+    annota.connect()
+    query, query_hits = arguments
+
+    all_hits = [(h[1], float(h[2]), float(h[10]), float(h[11])) for h in query_hits]
+    blast_hits = set([str(h[0]) for h in all_hits if h[2] <= TARGET_CUTOFFS[0]])
+    blast_hits.add(query)
+
+    orthologs = QUERY_ORTHOLOGS[query]
+
+    cutoff2result = {}
+    for cutoff in TARGET_CUTOFFS:
+        # get all hits that are not from self species and pass current cutoff
+        filtered_blast_hits = set([str(h[0]) for h in all_hits
+                                   if not h[0].startswith('%s.'%TARGET_TAXA)
+                                   and h[2] <= cutoff])
+        all_gos = get_gos(filtered_blast_hits)
+        emapper_gos = get_gos(filtered_blast_hits & orthologs)
+        cutoff2result[cutoff] = (query, all_gos, emapper_gos)
+
+    return cutoff2result
+
+def main(blast_hits_file):
     # Initialize output files
     OUT = {}
-    for cutoff in target_cutoffs:
-        OUT[str(cutoff)] = open('blast_benchmark.%s.%s' %(mapper_file, cutoff), "w")
+    for cutoff in TARGET_CUTOFFS:
+        outfile = '%s.%s.%s.blast_annotations' %(blast_hits_file, GO_MODE, cutoff)
+        emapper_outfile = 'emapper/%s/%s.%s.emapper.blast_filtered_annotations' %(EMAPPER_TAG, GO_MODE, cutoff)
+        OUT[str(cutoff)] = [open(outfile, "w"), open(emapper_outfile, "w")]
 
-    query = None
-    all_hits = []
     counter = 0
-    missing_mapper_hits = 0
-
-    # Process each block of blast hits. Assumes all hits for each query are
-    # consecutive
-    for query, query_hits in itertools.groupby(iter_tsv_lines(blast_hits_file), lambda x: x[0]):
-
-        all_hits = [(h[1], float(h[2]), float(h[10]), float(h[11])) for h in query_hits]
-
-        if query in seq2emapper:
-            ortho_hits = seq2emapper[query]
-        else:
-            ortho_hits = set()
-            missing_mapper_hits += 1
-
-        blast_hits = set([str(h[0]) for h in all_hits])
-        blast_hits.add(query)
-        all_names = blast_hits | ortho_hits
-        annotations = annota.get_by_member_annotations(all_names, set(["IEA", "ND"]))
-
-        if CACHE:
-            expected_gos = annotations[query][0]
-        else:
-            _, expected_gos, _ = annota.get_member_annotations([query], set(["IEA", "ND"]))
-
-        for cutoff in target_cutoffs:
-            # get all hits that are not from self species and pass current cutoff
-            if exec_mode == "evalue":
-                excluded_names = set([str(h[0]) for h in all_hits
-                                        if h[0].startswith('%s.'%target_taxa)
-                                        or h[2] > cutoff])
-
-            elif exec_mode == 'identity':
-                excluded_names = set([str(h[0]) for h in all_hits
-                                    if h[0].startswith('%s.'%target_taxa)
-                                    or h[1] < cutoff])
-
-            filtered_blast_hits = blast_hits - excluded_names
-
-            # sanity check: is there any predicted ortholog not part of the
-            # blast result? Should not occur
-            #if cutoff == 20:
-            #    uncatched_orthologs = augmented_ortho_hits - blast_hits
-            #    if uncatched_orthologs:
-            #        pass
-            #        #print len(uncatched_orthologs), "not seen", query, uncatched_orthologs
-
-            filtered_ortho_hits = ortho_hits & filtered_blast_hits
-
-            blast_gos = set()
-            if filtered_blast_hits:
-                if not CACHE:
-                    _, blast_gos, _ = annota.get_member_annotations(filtered_blast_hits, set(["IEA", "ND"]))
-                else:
-                    [blast_gos.update(annotations[name][0]) for name in filtered_blast_hits]
-
-            mapper_gos = set()
-            if filtered_ortho_hits:
-                if not CACHE:
-                    _, mapper_gos, _ = annota.get_member_annotations(filtered_ortho_hits, set(["IEA", "ND"]))
-                else:
-                    [mapper_gos.update(annotations[name][0]) for name in filtered_ortho_hits]
-
-
-            print >>OUT[str(cutoff)], '\t'.join(map(str, (query,
-                                                          len(expected_gos),
-                                                          len(blast_gos),
-                                                          len(mapper_gos),
-                                                          len(blast_gos & expected_gos),
-                                                          len(mapper_gos & expected_gos),
-                                                          ','.join(sorted(expected_gos)),
-                                                          ','.join(blast_gos),
-                                                          ','.join(mapper_gos),
-                                                          )))
+    for arguments in iter_hits(blast_hits_file):
+        result = annotate_blast_hits(arguments)
+        for cutoff, (query, all_gos, emapper_gos) in result.items():
+            print >>OUT[str(cutoff)][0], '\t'.join([query, ','.join(all_gos)])
+            print >>OUT[str(cutoff)][1], '\t'.join([query, ','.join(emapper_gos)])
 
         counter += 1
-        print counter, missing_mapper_hits
+        if counter % 10 == 0:
+            print "\r", counter,
+            sys.stdout.flush()
 
-
-    for f in OUT.values():
-        f.close()
+    for f1, f2 in OUT.values():
+        f1.close()
+        f2.close()
 
 if __name__ == "__main__":
     hits_file = sys.argv[1]
-    mapper_file = sys.argv[2]
-    target_taxa = sys.argv[3]
-    exec_mode = sys.argv[4]
+    HIT_IDS = set([n.strip() for n in open(sys.argv[2])])
+    TARGET_TAXA = str(int(sys.argv[3]))
+    GO_MODE = sys.argv[4]
+    EMAPPER_TAG = sys.argv[5]
+    CPU = int(sys.argv[6])
 
-    if exec_mode == "identity":
-        CUTOFFS = [20, 30, 40, 50, 60, 70]
-    elif exec_mode == 'evalue':
-        CUTOFFS = [1E-03, 1E-10, 1E-40]
+    sp, EMAPPER_METHOD, ORTHO_TYPE, TAX_SCOPE, GO_MODE, SELF = EMAPPER_TAG.split('.')
+    EMAPPER_ORTHOLOGS_FILE = 'emapper/%s/%s.emapper.annotations.orthologs' %(TARGET_TAXA, EMAPPER_TAG)
+
+    TARGET_CUTOFFS = [1E-03, 1E-10, 1E-40]
+    GO_EXCLUDED =  set(["ND", "IEA"])
+    if GO_MODE == 'experimental':
+        GO_EVIDENCE = set(["EXP","IDA","IPI","IMP","IGI","IEP"])
+    elif GO_MODE == "non-electronic":
+        GO_EVIDENCE = None
     else:
-        raise ValueError("choose mode: identity|evalue")
+        ValueError("Invalid go_mode")
 
-    main(hits_file, mapper_file, target_taxa, exec_mode, CUTOFFS)
+    cache_file = "%s.%s.cache.pkl" %(hits_file, GO_MODE)
+    try:
+        print 'loading cache...'
+        MEMBERGOS = cPickle.load(open(cache_file))
+    except:
+        print "Failed. Generating cache file"
+        annota.connect()
+        MEMBERGOS = annota.get_by_member_gos(HIT_IDS,
+                                             target_go_ev=GO_EVIDENCE,
+                                             excluded_go_ev=GO_EXCLUDED)
+        cPickle.dump(MEMBERGOS, open(cache_file, "wb"), protocol=2)
+
+    print len(MEMBERGOS), "hit ids in cache"
+
+    main(hits_file)
