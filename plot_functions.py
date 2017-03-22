@@ -173,10 +173,10 @@ def plot_blast_benchmark(benchmark, target_taxa, target_cutoffs, ylabel, emapper
 
     plt.subplots_adjust(left=None, bottom=0, right=None, top=1.02, wspace=None, hspace=None)
 
-    plt.savefig("emapper_vs_blast.%s.pdf" %(emapper_tag), dpi=300, facecolor='w', edgecolor='w',
+    plt.savefig("plots/emapper_vs_blast.%s.pdf" %(emapper_tag), dpi=300, facecolor='w', edgecolor='w',
             orientation='portrait', bbox_inches = 'tight')
 
-    plt.savefig("emapper_vs_blast.%s.png" %(emapper_tag), dpi=150, facecolor='w', edgecolor='w',
+    plt.savefig("plots/emapper_vs_blast.%s.png" %(emapper_tag), dpi=150, facecolor='w', edgecolor='w',
             orientation='portrait', bbox_inches = 'tight')
     if not nodisplay:
         plt.show()
@@ -330,10 +330,10 @@ def plot_interpro_benchmark(benchmark, target_taxa, emapper_tag, nodisplay=False
 
     plt.subplots_adjust(left=None, bottom=0, right=None, top=1.02, wspace=None, hspace=None)
 
-    plt.savefig("emapper_vs_interpro.%s.pdf" %emapper_tag, dpi=300, facecolor='w', edgecolor='w',
+    plt.savefig("plots/emapper_vs_interpro.%s.pdf" %emapper_tag, dpi=300, facecolor='w', edgecolor='w',
             orientation='portrait', bbox_inches = 'tight')
 
-    plt.savefig("emapper_vs_interpro.%s.png" %emapper_tag, dpi=150, facecolor='w', edgecolor='w',
+    plt.savefig("plots/emapper_vs_interpro.%s.png" %emapper_tag, dpi=150, facecolor='w', edgecolor='w',
             orientation='portrait', bbox_inches = 'tight')
     if not nodisplay:
         plt.show()
@@ -531,7 +531,7 @@ def get_emapper_blast_summary(bench, refresh_plots=True):
             plot_blast_benchmark(bench[tag], TARGET_TAXA, EVALUE_CUTOFFS, "E-value Cutoff", tag, nodisplay=True)
         stats = print_summary_table(bench[tag], '1e-40', ['blast'], average_only=True)
         html = translate_tag(tag, "yes")
-        html += "<img style='width:95%%;' src='emapper_vs_blast.%s.png'>" %(tag)
+        html += "<img style='width:95%%;' src='plots/emapper_vs_blast.%s.png'>" %(tag)
         html += '<br><pre>%s</pre>' %stats.getvalue()
         tabs.append(widgets.HTML(value=html))
         tab_names.append(tag)
@@ -554,7 +554,7 @@ def get_emapper_interpro_summary(bench, refresh_plots=True):
             plot_interpro_benchmark(bench[tag], TARGET_TAXA, tag, nodisplay=True)
         stats = print_summary_table(bench[tag], '1e-40', ['interpro'], average_only=True)
         html = translate_tag(tag, "yes")
-        html += "<img style='width:95%%;' src='emapper_vs_interpro.%s.png'>" %(tag)
+        html += "<img style='width:95%%;' src='plots/emapper_vs_interpro.%s.png'>" %(tag)
         html += '<br><pre>%s</pre>' %stats.getvalue()
         tabs.append(widgets.HTML(value=html))
         tab_names.append(tag)
@@ -615,11 +615,11 @@ def plot_general_benchmark(benchmark, target_taxa, emapper_tag):
                      height=1.9, color='darkgrey',linewidth=0, alpha=0.4)
 
         Lg = cov.barh((rn-0.2), row.htp,
-                      height=1.9, color='darkgreen',linewidth=0, alpha=0.2)
+                      height=1.9, color='darkgreen',linewidth=0, alpha=0.4)
         Lh = cov.barh((rn-0.2), row.hfp, left=row.htp,
-                      height=1.9, color='indianred',linewidth=0, alpha=0.2)
+                      height=1.9, color='indianred',linewidth=0, alpha=0.4)
         Li = cov.barh((rn-0.2), row.hunk, left=(row.htp+row.hfp),
-                      height=1.9, color='darkgrey',linewidth=0, alpha=0.2)
+                      height=1.9, color='darkgrey',linewidth=0, alpha=0.4)
 
 
         iratio = row.itp / (row.itp + row.ifp + row.iunk)
