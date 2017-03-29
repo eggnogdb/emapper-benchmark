@@ -5,6 +5,7 @@ import multiprocessing
 import time
 from eggnogmapper import annota
 import cPickle
+from collections import defaultdict
 
 def iter_tsv_lines(fname):
     for line in open(fname):
@@ -62,7 +63,7 @@ def main(blast_hits_file):
     OUT = {}
     for cutoff in TARGET_CUTOFFS:
         outfile = '%s.%s.%s.blast_annotations' %(blast_hits_file, GO_MODE, cutoff)
-        emapper_outfile = 'emapper/%s/%s.%s.emapper.blast_filtered_annotations' %(EMAPPER_TAG, GO_MODE, cutoff)
+        emapper_outfile = 'blast/%s/%s.%s.emapper.blast_filtered_annotations' %(TARGET_TAXA, EMAPPER_TAG, cutoff)
         OUT[str(cutoff)] = [open(outfile, "w"), open(emapper_outfile, "w")]
 
     counter = 0
@@ -81,6 +82,7 @@ def main(blast_hits_file):
         f1.close()
         f2.close()
 
+
 if __name__ == "__main__":
     hits_file = sys.argv[1]
     HIT_IDS = set([n.strip() for n in open(sys.argv[2])])
@@ -91,6 +93,10 @@ if __name__ == "__main__":
 
     sp, EMAPPER_METHOD, ORTHO_TYPE, TAX_SCOPE, GO_MODE, SELF = EMAPPER_TAG.split('.')
     EMAPPER_ORTHOLOGS_FILE = 'emapper/%s/%s.emapper.annotations.orthologs' %(TARGET_TAXA, EMAPPER_TAG)
+    QUERY_ORTHOLOGS = defaultdict(set)
+    for line in open(EMAPPER_ORTHOLOGS_FILE):
+        query, orthologs = map(str.strip, line.split('\t'))
+        QUERY_ORTHOLOGS[query] = set(map(str.strip, orthologs.split(',')))
 
     TARGET_CUTOFFS = [1E-03, 1E-10, 1E-40]
     GO_EXCLUDED =  set(["ND", "IEA"])
