@@ -16,7 +16,7 @@ TAXA_NAMES = {k:' '.join(v.split()[:2]) for k,v in ncbi.get_taxid_translator(PRO
 
 
 def plot_blast_benchmark(benchmark, target_taxa, target_cutoffs, ylabel, emapper_tag, nodisplay=False):
-    f, axes = plt.subplots(5, 3, figsize=(15, 15))
+    f, axes = plt.subplots(5, 3, figsize=(16.9, 15))
     for i, taxa in enumerate(target_taxa):
         if taxa not in benchmark:
             continue
@@ -173,7 +173,7 @@ def plot_blast_benchmark(benchmark, target_taxa, target_cutoffs, ylabel, emapper
 
     plt.subplots_adjust(left=None, bottom=0, right=None, top=1.02, wspace=None, hspace=None)
 
-    plt.savefig("plots/emapper_vs_blast.%s.pdf" %(emapper_tag), dpi=300, facecolor='w', edgecolor='w',
+    plt.savefig("plots/emapper_vs_blast.%s.pdf" %(emapper_tag), facecolor='w', edgecolor='w',
             orientation='portrait', bbox_inches = 'tight')
 
     plt.savefig("plots/emapper_vs_blast.%s.png" %(emapper_tag), dpi=150, facecolor='w', edgecolor='w',
@@ -183,7 +183,7 @@ def plot_blast_benchmark(benchmark, target_taxa, target_cutoffs, ylabel, emapper
 
 
 def plot_interpro_benchmark(benchmark, target_taxa, emapper_tag, nodisplay=False):
-    f, axes = plt.subplots(1, 3, figsize=(18, 5))
+    f, axes = plt.subplots(1, 3, figsize=(16.9, 5))
     max_gos = max([(benchmark[t].mtp + benchmark[t].mfp + benchmark[t].munk)[0] for t in target_taxa])
 
     rn = 0
@@ -470,7 +470,7 @@ def plot_cafa2_benchmark():
 
     width = 0.80      # the width of the bars
     fig, (ax1, ax2, ax3) = plt.subplots(1,3)
-    fig.set_size_inches(18.5, 6)
+    fig.set_size_inches(16.9, 6)
 
     for target, target_name, ax in [(mfo, "Molecular Function", ax1),
                                     (bpo, "Biological Process", ax2),
@@ -542,6 +542,22 @@ def get_emapper_blast_summary(bench, refresh_plots=True):
         blast_tabs.set_title(i, "% 25s" %name.replace('.NOG.', '.'))
     return blast_tabs
 
+def get_emapper_blast_summary_pdf(bench, refresh_plots=True):
+    from IPython.display import display, Markdown
+
+    # Generate plots for all emapper runs without taxonomic restriction (for BLAST comparison purposes)
+    blast_emapper_tags = sorted([k for k in bench.keys() if '.NOG.' in k])
+
+    for tag in blast_emapper_tags:
+        if refresh_plots:
+            plot_blast_benchmark(bench[tag], TARGET_TAXA, EVALUE_CUTOFFS, "E-value Cutoff", tag, nodisplay=True)
+        stats = print_summary_table(bench[tag], '1e-40', ['blast'], average_only=True)
+        html = translate_tag(tag, "yes")
+        html += "<img style='width:95%%;' src='plots/emapper_vs_blast.%s.png'>" %(tag)
+        html += '<br><pre>%s</pre>' %stats.getvalue()
+        display(Markdown(html))
+
+
 def get_emapper_interpro_summary(bench, refresh_plots=True):
     # Generate plots for all emapper runs with default taxonomic adjustment(for interProScan comparison purposes)
     interpro_emapper_tags = sorted([k for k in bench.keys() if '.auto.' in k])
@@ -568,7 +584,7 @@ def get_emapper_interpro_summary(bench, refresh_plots=True):
 
 def plot_general_benchmark(benchmark, target_taxa, emapper_tag):
     fig_height = len(target_taxa) + 1
-    f, axes = plt.subplots(1, 2, figsize=(15, fig_height))
+    f, axes = plt.subplots(1, 2, figsize=(16.9, fig_height))
     #max_gos = max([(benchmark[t].htp + benchmark[t].hfp + benchmark[t].hunk)[0] for t in target_taxa])
     max_gos = 0
     for taxa in target_taxa:
