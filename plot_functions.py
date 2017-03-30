@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from ete3 import NCBITaxa
 import ipywidgets as widgets
-from IPython.display import display, Markdown
+from IPython.display import display, Markdown, Latex
 
 # CONFIG
 PROTEOME_SIZE = {'9606': 22834, '511145': 4146, '7227': 13937, '3702': 28128, '4932':6692, '5833':5429, '759272':7402}
@@ -15,7 +15,7 @@ EVALUE_CUTOFFS = ["0.001", "1e-10", "1e-40"]
 ncbi = NCBITaxa()
 TAXA_NAMES = {k:' '.join(v.split()[:2]) for k,v in ncbi.get_taxid_translator(PROTEOME_SIZE.keys()).items()}
 
-pagebreak = '****'
+pagebreak = "\\clearpage"
 
 def plot_blast_benchmark(benchmark, target_taxa, target_cutoffs, ylabel, emapper_tag, nodisplay=False):
     f, axes = plt.subplots(5, 3, figsize=(16.9, 15))
@@ -565,10 +565,12 @@ def get_emapper_blast_summary_pdf(bench, refresh_plots=True):
             plot_blast_benchmark(bench[tag], TARGET_TAXA, EVALUE_CUTOFFS, "E-value Cutoff", tag, nodisplay=True)
         stats = print_summary_table(bench[tag], '1e-40', ['blast'], average_only=True)
         html = translate_tag_md(tag, "yes")
-        html += '\n![%s](plots/emapper_vs_blast.%s.png)' %(tag, tag)
         html += '\n```\n %s``` ' %stats.getvalue()
         display(Markdown(html))
-    #display(Markdown(pagebreak))
+        display(Latex(pagebreak))
+        img = '\n![%s](plots/emapper_vs_blast.%s.png)' %(tag, tag)
+        display(Markdown(img))
+        display(Latex(pagebreak))
 
 def get_emapper_interpro_summary_pdf(bench, refresh_plots=True):
     interpro_emapper_tags = sorted([k for k in bench.keys() if '.auto.' in k])
@@ -578,11 +580,12 @@ def get_emapper_interpro_summary_pdf(bench, refresh_plots=True):
             plot_interpro_benchmark(bench[tag], TARGET_TAXA, tag, nodisplay=True)
         stats = print_summary_table(bench[tag], '1e-40', ['interpro'], average_only=True)
         html = translate_tag_md(tag, "yes")
-        html += '\n![%s](plots/emapper_vs_interpro.%s.png)' %(tag, tag)
         html += '\n```\n %s``` ' %stats.getvalue()
         display(Markdown(html))
-
-    #display(Markdown(pagebreak))
+        display(Latex(pagebreak))
+        img = '\n![%s](plots/emapper_vs_interpro.%s.png)' %(tag, tag)
+        display(Markdown(img))
+        display(Latex(pagebreak))
 
 
 def get_emapper_interpro_summary(bench, refresh_plots=True):
@@ -756,6 +759,8 @@ def plot_general_benchmark(benchmark, target_taxa, emapper_tag):
             cov.legend(handles=[La, Lb, Lc, Lg, Lh, Li], loc=2, ncol=2, bbox_to_anchor=(-0.9, 1.50))
 
     plt.subplots_adjust(left=None, bottom=0, right=None, top=1.02, wspace=None, hspace=None)
+    plt.savefig("plots/emapper_non_model_species.%s.pdf" %(emapper_tag), facecolor='w', edgecolor='w',
+            orientation='portrait', bbox_inches = 'tight')
 
     plt.show()
 
