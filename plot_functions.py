@@ -1,10 +1,11 @@
+import os
 from matplotlib import pyplot as plt
 from StringIO import StringIO
 import numpy as np
 import pandas as pd
 from ete3 import NCBITaxa
 import ipywidgets as widgets
-
+from IPython.display import display, Markdown
 
 # CONFIG
 PROTEOME_SIZE = {'9606': 22834, '511145': 4146, '7227': 13937, '3702': 28128, '4932':6692, '5833':5429, '759272':7402}
@@ -14,6 +15,7 @@ EVALUE_CUTOFFS = ["0.001", "1e-10", "1e-40"]
 ncbi = NCBITaxa()
 TAXA_NAMES = {k:' '.join(v.split()[:2]) for k,v in ncbi.get_taxid_translator(PROTEOME_SIZE.keys()).items()}
 
+pagebreak = '****'
 
 def plot_blast_benchmark(benchmark, target_taxa, target_cutoffs, ylabel, emapper_tag, nodisplay=False):
     f, axes = plt.subplots(5, 3, figsize=(16.9, 15))
@@ -258,11 +260,11 @@ def plot_interpro_benchmark(benchmark, target_taxa, emapper_tag, nodisplay=False
                      height=1.9, color='darkgrey',linewidth=0, alpha=0.9, label='Not curated terms (eggNOG)')
 
         Ld = cov.barh((rn-0.1), row.itp,
-                     height=1.9, color='darkgreen',linewidth=0, alpha=0.4, label='(interProScan)')
+                     height=1.9, color='darkgreen',linewidth=0, alpha=0.4, label='(interPro)')
         Le = cov.barh((rn-0.1), row.ifp, left=row.itp,
-                     height=1.9, color='indianred',linewidth=0, alpha=0.4, label='(interProScan)')
+                     height=1.9, color='indianred',linewidth=0, alpha=0.4, label='(interPro)')
         Lf = cov.barh((rn-0.1), row.iunk, left=(row.itp+row.ifp),
-                     height=1.9, color='darkgrey',linewidth=0, alpha=0.4, label='(interProScan)')
+                     height=1.9, color='darkgrey',linewidth=0, alpha=0.4, label='(interPro)')
 
 
         iratio = row.itp / (row.itp + row.ifp + row.iunk)
@@ -305,13 +307,13 @@ def plot_interpro_benchmark(benchmark, target_taxa, emapper_tag, nodisplay=False
                     label='Proteins lacking TP terms (eggNOG)')
 
         Lj = cov.barh((rn-0.1), row.ip_tponly/psize,
-                     height=1.9, color='darkblue',linewidth=0, alpha=0.4, label='(interProScan)')
+                     height=1.9, color='darkblue',linewidth=0, alpha=0.4, label='(interPro)')
 
         Lk = cov.barh((rn-0.1), row.ip_tpplus/psize, left=row.ip_tponly/psize,
-                     height=1.9, color='purple',linewidth=0, alpha=0.4, label='(interProScan)')
+                     height=1.9, color='purple',linewidth=0, alpha=0.4, label='(interPro)')
 
         Lm = cov.barh((rn-0.1), row.ip_notp/psize, left=(row.ip_tponly + row.ip_tpplus)/psize,
-                     height=1.9, color='orange',linewidth=0, alpha=0.4, label='(interProScan)')
+                     height=1.9, color='orange',linewidth=0, alpha=0.4, label='(interPro)')
 
 
         iratio = row.ip_notp / (row.ip_tponly + row.ip_tpplus + row.ip_notp)
@@ -519,6 +521,19 @@ def translate_tag(tag, self):
     html += "<b>self proteome excluded</b> = %s <br>" %self
     return html
 
+def translate_tag_md(tag, self):
+    method, orthologs, tax_scope, go_evidence = tag.split('.')
+    tax_scope = 'none' if tax_scope == 'NOG' else 'auto'
+    html = "### %s\n```\n" %tag
+    html += "emapper_method         = %s\n" %method
+    html += "source orthologs       = %s\n" %orthologs
+    html += "taxonomic restriction  = %s\n" %tax_scope
+    html += "GO evidence code       = %s\n" %go_evidence
+    html += "self proteome excluded = %s\n```" %self
+    return html
+
+
+
 def get_emapper_blast_summary(bench, refresh_plots=True):
     # Generate plots for all emapper runs without taxonomic restriction (for BLAST comparison purposes)
     blast_emapper_tags = sorted([k for k in bench.keys() if '.NOG.' in k])
@@ -543,19 +558,31 @@ def get_emapper_blast_summary(bench, refresh_plots=True):
     return blast_tabs
 
 def get_emapper_blast_summary_pdf(bench, refresh_plots=True):
-    from IPython.display import display, Markdown
-
     # Generate plots for all emapper runs without taxonomic restriction (for BLAST comparison purposes)
     blast_emapper_tags = sorted([k for k in bench.keys() if '.NOG.' in k])
-
     for tag in blast_emapper_tags:
         if refresh_plots:
             plot_blast_benchmark(bench[tag], TARGET_TAXA, EVALUE_CUTOFFS, "E-value Cutoff", tag, nodisplay=True)
         stats = print_summary_table(bench[tag], '1e-40', ['blast'], average_only=True)
-        html = translate_tag(tag, "yes")
-        html += "<img style='width:95%%;' src='plots/emapper_vs_blast.%s.png'>" %(tag)
-        html += '<br><pre>%s</pre>' %stats.getvalue()
+        html = translate_tag_md(tag, "yes")
+        html += '\n![%s](plots/emapper_vs_blast.%s.png)' %(tag, tag)
+        html += '\n```\n %s``` ' %stats.getvalue()
         display(Markdown(html))
+    #display(Markdown(pagebreak))
+
+def get_emapper_interpro_summary_pdf(bench, refresh_plots=True):
+    interpro_emapper_tags = sorted([k for k in bench.keys() if '.auto.' in k])
+
+    for tag in interpro_emapper_tags:
+        if refresh_plots:
+            plot_interpro_benchmark(bench[tag], TARGET_TAXA, tag, nodisplay=True)
+        stats = print_summary_table(bench[tag], '1e-40', ['interpro'], average_only=True)
+        html = translate_tag_md(tag, "yes")
+        html += '\n![%s](plots/emapper_vs_interpro.%s.png)' %(tag, tag)
+        html += '\n```\n %s``` ' %stats.getvalue()
+        display(Markdown(html))
+
+    #display(Markdown(pagebreak))
 
 
 def get_emapper_interpro_summary(bench, refresh_plots=True):
