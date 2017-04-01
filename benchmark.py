@@ -18,7 +18,7 @@ def read_tsv(fname):
         yield line, map(str.strip, line.split('\t'))
 
 def get_false_positives():
-    false_positives = {}
+    false_positives = defaultdict(set)
     for line in open('data/all_negative_terms_per_taxid.tsv'):
         fields = map(str.strip, line.split('\t'))
         taxid = fields[0]
@@ -33,10 +33,21 @@ def get_augmented_emapper_gos(target_file):
     emapper = defaultdict(set)
     for line, fields in read_tsv(target_file):
         query = fields[0]
-        gos = set(map(str.strip, fields[6].split(',')))
+        gos = set(map(str.strip, fields[5].split(',')))
         gos.discard('')
         emapper[query] = augment_gos(gos)
     return emapper
+
+def get_augmented_blast_gos(target_file):
+    blast = defaultdict(set)
+    for line, fields in read_tsv(target_file):
+        query = fields[0]
+        gos = set(map(str.strip, fields[1].split(',')))
+        gos.discard('')
+        blast[query] = augment_gos(gos)
+    return blast
+
+get_augmented_ref_gos = get_augmented_blast_gos
 
 def get_augmented_interpro_gos(target_file):
     interpro = defaultdict(set)
@@ -51,7 +62,7 @@ def get_augmented_interpro_gos(target_file):
             interpro[query] = augment_gos(gos)
     return interpro
 
-def benchmark(target_taxa, target_cutoffs, emapper_mode, emapper_tag):
+def benchmark(target_taxa, target_cutoffs, emapper_tag, blast_tag):
     # Discard root GO ids (not really an annotation)
     root_levels = set(['GO:0008150', 'GO:0003674', 'GO:0005575'])
 
@@ -62,58 +73,66 @@ def benchmark(target_taxa, target_cutoffs, emapper_mode, emapper_tag):
 
     benchmark = {}
     for taxa in target_taxa:
-        emapper_annot_file = "emapper_%s/%s/%s.%s.annot" %(emapper_mode, taxa, taxa, emapper_tag)
         interpro_annot_file = "interpro/%s.interpro.gz" %(taxa)
-        print ' ', emapper_tag, emapper_annot_file
+        if "non-electronic" in emapper_tag:
+            groundtruth_file = "groundtruth/%s.groundtruth.non-electronic" %(taxa)
+        elif "experimental" in emapper_tag:
+            groundtruth_file = "groundtruth/%s.groundtruth.experimental" %(taxa)
+
+        emapper_annot_file_self = "emapper/%s/%s.%s.self.emapper.annotations" %(taxa, taxa, emapper_tag)
+        emapper_annot_file_noself = "emapper/%s/%s.%s.noself.emapper.annotations" %(taxa, taxa, emapper_tag)
+        print ' ', emapper_tag, emapper_annot_file_noself
+        print ' ', emapper_tag, emapper_annot_file_self
         print ' ', emapper_tag, interpro_annot_file
-        emapper = get_augmented_emapper_gos(emapper_annot_file)
+
+        emapper_self = get_augmented_emapper_gos(emapper_annot_file_self) # for interpro comparison
         interpro = get_augmented_interpro_gos(interpro_annot_file)
+        groundtruth = get_augmented_ref_gos(groundtruth_file)
 
-        print taxa, len(emapper), len(interpro)
-
+        print "Tax %s, eM(self) %s, iPro %s, truth %s" %(taxa, len(emapper_self), len(interpro), len(groundtruth))
         labels = []
         rows = []
 
         for cutoff in target_cutoffs:
-            blast_annot_file = "emapper_%s/%s/blast_benchmark.%s.%s.annot.%s" %(emapper_mode, taxa, taxa, emapper_tag, cutoff)
+            blast_annot_file = "blast/%s/%s.fa.hits.%s.%s.blast_annotations" %(taxa, taxa, blast_tag, cutoff)
+            emapper_blast_file = "blast/%s/%s.%s.noself.%s.emapper.blast_filtered_annotations" %(taxa, taxa, emapper_tag, cutoff)
+
+            blast = get_augmented_blast_gos(blast_annot_file)
+            emapper_blast = get_augmented_blast_gos(emapper_blast_file)
+
             print ' ', emapper_tag, blast_annot_file
             matrix = []
-            for line, fields in read_tsv(blast_annot_file):
-                try:
-                    (query, _, _, _, __htp, __otp,
-                     tp_txt, hgos_txt, ogos_txt) = fields
-                except:
-                    continue
 
-                tp = augment_gos(set(tp_txt.split(','))) - root_levels     # expected GOs (curated terms in query)
-                hgos = augment_gos(set(hgos_txt.split(','))) - root_levels # blast GOs no selfhits (homologs)
-                ogos = augment_gos(set(ogos_txt.split(','))) - root_levels # emapper GOS no selfhits (one2one orthologs)
-                igos = interpro.get(query, set()) - root_levels # interpro results
-                mgos = emapper.get(query, set()) - root_levels  # emapper results
+            for query in blast:
+                #try:
+                #    (query, _, _, _, __htp, __otp,
+                #     tp_txt, hgos_txt, ogos_txt) = fields
+                #except:
+                #    continue
+
+                tp = groundtruth[query]
+                hgos = blast[query]
+                ogos = emapper_blast[query]
+                igos = interpro[query]
+                mgos = emapper_self[query]
+
+                # Solve conflicts between tp and fp definitions.
+                fp = false_positives[taxa] - tp
+
+                #tp = augment_gos(set(tp_txt.split(','))) - root_levels     # expected GOs (curated terms in query)
+                #hgos = augment_gos(set(hgos_txt.split(','))) - root_levels # blast GOs no selfhits (homologs)
+                #ogos = augment_gos(set(ogos_txt.split(','))) - root_levels # emapper GOS no selfhits (one2one orthologs)
+                #igos = interpro.get(query, set()) - root_levels # interpro results
+                #mgos = emapper.get(query, set()) - root_levels  # emapper results
 
                 # sanitize sets with empty data
-                for s in [tp, hgos, ogos, igos, mgos]:
+                for s in [tp, fp, hgos, ogos, igos, mgos]:
                     s.discard('')
 
                 htp = len(hgos & tp)
                 otp = len(ogos & tp)
                 itp = len(igos & tp)
                 mtp = len(mgos & tp)
-
-                # Sanity check: same tp numbers should have been inferred during processing.
-                # You need to empty root_levels for this check to work!
-                if not root_levels:
-                    try:
-                        assert htp == int(__htp)
-                        assert otp == int(__otp)
-                    except AssertionError:
-                        print query, cutoff
-                        print htp, __htp
-                        print otp, __otp
-                        raise
-
-                # Solve conflicts between tp and fp definitions.
-                fp = false_positives[taxa] - tp
 
                 hfp = len(hgos & fp)
                 ofp = len(ogos & fp)
@@ -145,7 +164,6 @@ def benchmark(target_taxa, target_cutoffs, emapper_mode, emapper_tag):
                hunk         ounk         iunk        munk
                """.split())
             bench = pd.DataFrame(matrix, columns=header)
-
 
             # Summarize data and save stats line
             labels.append(cutoff)
@@ -207,30 +225,26 @@ def benchmark(target_taxa, target_cutoffs, emapper_mode, emapper_tag):
     return benchmark
 
 def compute_benchmark(args):
-    target_taxa, evalue_cutoffs, emapper_mode, emapper_tag = args
-    #return emapper_tag, {emapper_tag:1}
-    return emapper_tag, benchmark(target_taxa, evalue_cutoffs, emapper_mode, emapper_tag)
+    target_taxa, evalue_cutoffs, emapper_tag, blast_tag = args
+    return emapper_tag, benchmark(target_taxa, evalue_cutoffs, emapper_tag, blast_tag)
 
 if __name__ == "__main__":
-    TARGET_TAXA = ['9606', '7227', '3702', '4932', '511145']
-    IDENT_CUTOFFS = ["20", "30", "40", "50", "60", "70"]
+    TARGET_TAXA = ['9606', '7227', '3702', '4932', '511145', '5833', '759272']
     EVALUE_CUTOFFS = ["0.001", "1e-10", "1e-40"]
     TARGET_TAXA_SCOPE = ["auto", "NOG"]
-    TARGET_SELF = ['', 'excluded_self.']
     TARGET_ORTHO_TYPE = ['all', 'one2one']
-    EMAPPER_MODES = ['hmm', 'diamond']
-    BASEDIR = 'emapper'
+    EMAPPER_MODES = ['hmmer', 'diamond']
+    TARGET_GO = ['non-electronic', 'experimental']
+
     bench = {}
     cmds = []
     for emapper_mode in EMAPPER_MODES:
-        for tself in TARGET_SELF:
-            for tscope in TARGET_TAXA_SCOPE:
-                for otype in TARGET_ORTHO_TYPE:
-                    if emapper_mode == 'diamond':
-                        emapper_tag = "dmnd.%s%s.%s" %(tself, otype, tscope)
-                    else:
-                        emapper_tag = "%s%s.%s" %(tself, otype, tscope)
-                    cmds.append([TARGET_TAXA, EVALUE_CUTOFFS, emapper_mode, emapper_tag])
+        for tscope in TARGET_TAXA_SCOPE:
+            for otype in TARGET_ORTHO_TYPE:
+                for gtype in TARGET_GO:
+                    emapper_tag = "%s.%s.%s.%s" %(emapper_mode, otype, tscope, gtype)
+                    blast_tag = "%s" %(gtype)
+                    cmds.append([TARGET_TAXA, EVALUE_CUTOFFS, emapper_tag, blast_tag])
 
     pool = Pool(20)
     for tag, b in pool.imap(compute_benchmark, cmds):
@@ -238,5 +252,5 @@ if __name__ == "__main__":
         print tag, "Done"
         print b
 
-    with open('all_benchmark_tables.pkl', 'w') as BENCH:
+    with open('all_benchmark_tables_new.pkl', 'w') as BENCH:
         cPickle.dump(bench, BENCH)
