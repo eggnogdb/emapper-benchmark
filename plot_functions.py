@@ -508,10 +508,10 @@ def plot_cafa2_benchmark():
             ax.text(rect.get_x() + rect.get_width()/2. - 0.2, 0.2,
                     'C=%0.2f' % target[i][1], color="white",
                     ha='left', rotation=90)
-    plt.show()
+
     plt.savefig("plots/emapper_cafa2.pdf", facecolor='w', edgecolor='w',
-            orientation='portrait', bbox_inches = 'tight')
-    
+                bbox_inches = 'tight')
+    plt.show()
     
 
 def translate_tag(tag, self):
